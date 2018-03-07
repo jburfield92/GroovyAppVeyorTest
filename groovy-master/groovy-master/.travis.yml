@@ -1,0 +1,63 @@
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+language: groovy
+
+# set sudo required for non-container vm with more mem even though we don't need sudo
+# https://docs.travis-ci.com/user/reference/overview/
+sudo: required
+dist: trusty
+
+matrix:
+  include:
+# Java 10 "Oracle JDK"
+#    - env: JDK_RELEASE='Oracle JDK 10' EXTRA_GRADLE_ARGS=''
+#      install: . ./src/install/install-jdk.sh -F 10 -L BCL
+# Java 10 "OpenJDK"
+#    - env: JDK_RELEASE='OpenJDK 10' EXTRA_GRADLE_ARGS=''
+#      install: . ./src/install/install-jdk.sh -F 10 -L GPL
+# Java 9 "Oracle JDK" (provided by Travis CI)
+    - jdk: oraclejdk9
+      env: JDK_RELEASE='Oracle JDK 9' EXTRA_GRADLE_ARGS=''
+      install: echo "Don't let Travis CI execute './gradlew assemble' by default"
+# Java 9 "OpenJDK"
+    - env: TRAVIS_JDK_VERSION='openjdk9' JDK_RELEASE='OpenJDK 9' EXTRA_GRADLE_ARGS=''
+      install: . ./src/install/install-jdk.sh -F 9 -L GPL
+# Java 8 "Oracle JDK" (provided by Travis CI)
+    - jdk: oraclejdk8
+      env: JDK_RELEASE='Oracle JDK 8' EXTRA_GRADLE_ARGS=''
+      install: echo "Don't let Travis CI execute './gradlew assemble' by default"
+# Java 8 "OpenJDK"
+#    - env: JDK_RELEASE='OpenJDK 8' EXTRA_GRADLE_ARGS=''
+#      install: . ./src/install/install-jdk.sh -F 8 -L GPL
+
+before_script:
+  - |
+    unset _JAVA_OPTIONS
+
+script:
+  - ./gradlew -version
+  - travis_wait 60 ./gradlew test
+
+# As recommended in:
+# https://docs.travis-ci.com/user/languages/java/#Caching
+before_cache:
+  - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
+  - rm -fr $HOME/.gradle/caches/*/plugin-resolution/
+
+cache:
+  directories:
+    - $HOME/.gradle/caches/
+    - $HOME/.gradle/wrapper/
